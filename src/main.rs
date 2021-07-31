@@ -1,8 +1,4 @@
 /*
- * TODO: get default-branch name
- * TODO: import CLI framework
- * TODO: create CLI commands
- * TODO: import tokio
  * TODO: grasp
  * TODO: create new branch
  * TODO: create new PR
@@ -17,16 +13,42 @@
 use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
+use clap::{AppSettings, Clap};
 use git2::BranchType::Local;
 use git2::Repository;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let cwd = std::env::current_dir().context("unable to obtain PWD")?;
-    let repo = Repository::open(cwd).context("failed to open repo")?;
-    let name = name_of_default_branch(&repo).context("failed to obtain name of default branch")?;
-    println!("{}", name);
+    let opts: Opts = Opts::parse();
+
+    match opts.subcmd {
+        DefaultBranchName => {
+            let cwd = std::env::current_dir().context("unable to obtain PWD")?;
+            let repo = Repository::open(cwd).context("failed to open repo")?;
+            let name =
+                name_of_default_branch(&repo).context("failed to obtain name of default branch")?;
+            println!("{}", name);
+        }
+        _ => {}
+    }
     Ok(())
+}
+
+/// gtc is a git powertool
+#[derive(Clap)]
+#[clap(version = "1.0", author = "btc <btc@no.reply.com>")]
+#[clap(setting = AppSettings::ColoredHelp)]
+struct Opts {
+    /// Sets the path to the git repo
+    #[clap(short, long, default_value = ".")]
+    path: String,
+    #[clap(subcommand)]
+    subcmd: SubCommand,
+}
+
+#[derive(Clap)]
+enum SubCommand {
+    DefaultBranchName,
 }
 
 fn name_of_default_branch(repo: &Repository) -> Result<String> {
