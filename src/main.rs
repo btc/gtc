@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
     match opts.subcmd {
         DefaultBranchName => {
             let cwd = std::env::current_dir().context("unable to obtain PWD")?;
-            let repo = Repository::open(cwd).context("failed to open repo")?;
+            let repo = Repository::discover(cwd).context("failed to open repo")?;
             let name =
                 name_of_default_branch(&repo).context("failed to obtain name of default branch")?;
             println!("{}", name);
