@@ -12,7 +12,6 @@
  * TODO: test different repos flavor, pancake, this one, etc.
  */
 
-use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use clap::{AppSettings, Clap};
@@ -36,9 +35,9 @@ async fn main() -> Result<()> {
         SubCommand::CreateBranch => {
             let cwd = std::env::current_dir().context("unable to obtain PWD")?;
             let repo = Repository::discover(cwd).context("failed to open repo")?;
-            create_branch::create_branch(&repo)?;
+            let name = create_branch::create_branch(&repo)?;
+            println!("{}", name);
         }
-        _ => {}
     }
     Ok(())
 }
@@ -48,9 +47,6 @@ async fn main() -> Result<()> {
 #[clap(version = "1.0", author = "btc <btc@no.reply.com>")]
 #[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
-    /// Sets the path to the git repo
-    #[clap(short, long, default_value = ".")]
-    path: String,
     #[clap(subcommand)]
     subcmd: SubCommand,
 }
@@ -58,5 +54,6 @@ struct Opts {
 #[derive(Clap)]
 enum SubCommand {
     DefaultBranchName,
+    #[clap(visible_alias = "branch-random")]
     CreateBranch,
 }
