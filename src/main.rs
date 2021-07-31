@@ -9,7 +9,12 @@
  * TODO: access GitHub API in Rust
  * TODO: update PR chain
  * TODO: rebase PR on main if dependent PR is merged
+ *
+ * TODO: sync chain
+ * TODO: if curr.approved then curr.merge, delete curr.remote -> GOTO curr = next
  */
-fn main() {
+
+#[tokio::main]
+async fn main() {
     println!("Hello, world!");
 }
