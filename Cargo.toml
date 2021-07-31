@@ -10,4 +10,5 @@ github-rs = "0.7"
 serde_json = "1.0"
 clap = "2.33.3"
 git2 = "0.13.20"
+anyhow = "*"
 tokio = { version = "0.2", features = ["full"] }
