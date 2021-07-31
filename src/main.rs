@@ -1,6 +1,5 @@
 /*
  * TODO: grasp
- * TODO: create new branch
  * TODO: create new PR
  * TODO: access GitHub API in Rust
  * TODO: update PR chain
@@ -19,24 +18,26 @@ use git2::Repository;
 
 mod create_branch;
 mod default_branch_name;
+mod checkout_default_branch;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
+    let cwd = std::env::current_dir().context("unable to obtain PWD")?;
+    let repo = Repository::discover(cwd).context("failed to open repo")?;
     match opts.subcmd {
         SubCommand::DefaultBranchName => {
-            let cwd = std::env::current_dir().context("unable to obtain PWD")?;
-            let repo = Repository::discover(cwd).context("failed to open repo")?;
             let name = default_branch_name::default_branch_name(&repo)
                 .context("failed to obtain name of default branch")?;
             println!("{}", name);
         }
         SubCommand::CreateBranch => {
-            let cwd = std::env::current_dir().context("unable to obtain PWD")?;
-            let repo = Repository::discover(cwd).context("failed to open repo")?;
             let name = create_branch::create_branch(&repo)?;
             println!("{}", name);
+        }
+        SubCommand::CheckoutDefaultBranch => {
+            checkout_default_branch::checkout_default_branch(&repo)?;
         }
     }
     Ok(())
@@ -56,4 +57,6 @@ enum SubCommand {
     DefaultBranchName,
     #[clap(visible_alias = "branch-random")]
     CreateBranch,
+    #[clap(visible_alias = "m")]
+    CheckoutDefaultBranch,
 }
