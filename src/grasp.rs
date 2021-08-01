@@ -1,10 +1,9 @@
+use crate::default_branch_name::default_branch_name;
 use anyhow::anyhow;
 use anyhow::Result;
 use git2::{Repository, StatusOptions};
-use crate::default_branch_name::default_branch_name;
 
 pub fn grasp(repo: Repository) -> Result<()> {
-
     if !is_clean(&repo)? {
         return Err(anyhow!("repo must be clean"));
     }
@@ -12,13 +11,19 @@ pub fn grasp(repo: Repository) -> Result<()> {
     let default = default_branch_name(&repo)?;
     switch(&repo, &default)?;
 
+    fetch(&repo, "origin", &default)?;
+
     /* TODO
-    checkout default
-    fetch
     rebase default on origin/default
     checkout -
     rebase on default
      */
+    Ok(())
+}
+
+fn fetch(repo: &Repository, remote: &str, branch: &str) -> Result<()> {
+    let refspecs = &[branch];
+    repo.find_remote(remote)?.fetch(refspecs, None, None)?;
     Ok(())
 }
 
