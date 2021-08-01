@@ -40,11 +40,8 @@ pub fn grasp(repo: &Repository) -> Result<()> {
 
     // apply default-branch updates to branch of interest
 
-    /*
     switch(&repo, &current_branch)?;
     rebase(&repo, &default_branch)?;
-
-     */
 
     Ok(())
 }
