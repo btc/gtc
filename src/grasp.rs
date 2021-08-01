@@ -73,23 +73,48 @@ fn switch(repo: &Repository, branch: &str) -> Result<()> {
 }
 
 fn is_clean(repo: &Repository) -> Result<bool> {
+    Ok(dirty_files(&repo)?.is_empty())
+}
+
+fn dirty_files(repo: &Repository) -> Result<Vec<String>> {
     let mut opts = StatusOptions::new();
     opts.include_ignored(false);
     let statuses = repo.statuses(Some(&mut opts))?;
-    let is_clean = statuses.iter().len() == 0;
-    Ok(is_clean)
+    let mut vec = Vec::new();
+    for s in statuses.iter() {
+        let p = s.path().context("path is missing")?;
+        vec.push(p.to_string());
+    }
+    Ok(vec)
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::create_branch::create_branch;
+    use crate::test::commit_a_file;
 
     #[test]
     fn test_grasp() -> Result<()> {
-        let (td, repo) = crate::test::repo_init();
-        let name = create_branch(&repo)?;
-        // TODO
+        let (_td, repo) = crate::test::repo_init();
+        let default = default_branch_name(&repo)?;
+
+        let new_branch = create_branch(&repo)?;
+
+        switch(&repo, &default)?;
+        commit_a_file(&repo, "foo")?;
+        assert_eq!(Vec::<String>::new(), dirty_files(&repo)?);
+
+        switch(&repo, &new_branch)?;
+        assert_eq!(
+            Vec::<String>::new(),
+            dirty_files(&repo)?,
+            "committed files from previous branch are present after switch",
+        );
+        assert!(is_clean(&repo)?);
+
+        assert!(is_clean(&repo)?);
+
         Ok(())
     }
 }
