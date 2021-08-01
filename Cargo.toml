@@ -12,4 +12,5 @@ clap = "3.0.0-beta.2"
 primes = "0.3.0"
 git2 = "0.13.20"
 anyhow = "*"
+tempfile = "*"
 tokio = { version = "0.2", features = ["full"] }
