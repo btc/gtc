@@ -27,7 +27,8 @@ pub fn grasp(repo: Repository) -> Result<()> {
 }
 
 fn rebase_current_branch_upstream(repo: &Repository) -> Result<()> {
-    let mut rebase = repo.rebase(None, None, None, None)?;
+    let mut opts = Default::default();
+    let mut rebase = repo.rebase(None, None, None, Some(&mut opts))?;
     loop {
         let maybe = rebase.next();
         if maybe.is_none() {
