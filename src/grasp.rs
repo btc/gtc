@@ -3,7 +3,10 @@ use std::process::Command;
 
 use anyhow::Result;
 use anyhow::{anyhow, Context};
-use git2::{AnnotatedCommit, Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
+use git2::{
+    AnnotatedCommit, Cred, FetchOptions, RebaseOperationType, RemoteCallbacks, Repository,
+    Signature, StatusOptions,
+};
 
 use crate::default_branch_name::default_branch_name;
 use crate::switch::switch;
@@ -69,6 +72,7 @@ fn rebase_exec(repo: &Repository, upstream: &str) -> Result<()> {
 
 fn rebase(repo: &Repository, upstream: &str) -> Result<()> {
     let mut opts = Default::default();
+    let sig = Signature::now("gtc", "gtc@example.com").unwrap();
 
     let upstream_commit = annotated_commit_from_shortname(&repo, upstream)?;
 
@@ -79,7 +83,9 @@ fn rebase(repo: &Repository, upstream: &str) -> Result<()> {
             rebase.finish(None).context("rebase failed on finish")?;
             return Ok(());
         }
-        let _op = maybe.unwrap().context("failed rebase operation")?;
+        let op = maybe.unwrap().context("failed rebase operation")?;
+
+        let _ = rebase.commit(None, &sig, None)?;
     }
 }
 
