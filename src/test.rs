@@ -1,6 +1,7 @@
 use git2::{Repository, RepositoryInitOptions};
 use tempfile::TempDir;
 
+#[allow(dead_code)]
 pub fn repo_init() -> (TempDir, Repository) {
     let td = TempDir::new().unwrap();
     let mut opts = RepositoryInitOptions::new();
