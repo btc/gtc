@@ -66,6 +66,8 @@ fn switch(repo: &Repository, branch: &str) -> Result<()> {
         .name()
         .ok_or(anyhow!("failed to resolve reference"))?
         .to_string();
+    let treeish = repo.revparse_single(reference.as_str())?;
+    repo.checkout_tree(&treeish, None)?;
     repo.set_head(&reference)?;
     Ok(())
 }
