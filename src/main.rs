@@ -76,9 +76,3 @@ enum SubCommand {
         dry_run: bool,
     },
 }
-
-#[derive(Clap)]
-struct CleanupBranches {
-    #[clap(short)]
-    dry_run: bool,
-}

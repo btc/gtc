@@ -6,7 +6,7 @@ pub fn cleanup_branches(repo: Repository, dry_run: bool) -> anyhow::Result<()> {
     if dry_run {
         return Ok(())
     }
-    for branch in repo.branches(None) {
+    for _branch in repo.branches(None) {
     }
     Ok(())
 }

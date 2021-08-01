@@ -1,6 +1,5 @@
 use anyhow::anyhow;
 use anyhow::Result;
-use git2::RepositoryState::Clean;
 use git2::{Repository, StatusOptions};
 
 pub fn grasp(repo: Repository) -> Result<()> {
