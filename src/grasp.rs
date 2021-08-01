@@ -1,8 +1,9 @@
 use crate::default_branch_name::default_branch_name;
-use anyhow::{anyhow, Context};
 use anyhow::Result;
+use anyhow::{anyhow, Context};
 use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
 use std::env;
+use std::process::Command;
 
 pub fn grasp(repo: &Repository) -> Result<()> {
     if !is_clean(&repo)? {
@@ -23,6 +24,22 @@ pub fn grasp(repo: &Repository) -> Result<()> {
     checkout -
     rebase on default
      */
+    Ok(())
+}
+
+fn rebase_exec(repo: &Repository, base_branch: &str) -> Result<()> {
+    let path = repo.path().parent().context("failed to locate git repo")?;
+
+    let status = Command::new("git")
+        .arg("rebase")
+        .arg(base_branch)
+        .current_dir(path)
+        .output()?
+        .status;
+    if !status.success() {
+        return Err(anyhow!("failed to rebase"));
+    }
+
     Ok(())
 }
 
