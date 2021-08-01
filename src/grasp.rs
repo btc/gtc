@@ -1,41 +1,60 @@
 use std::env;
 use std::process::Command;
 
-use anyhow::{anyhow, Context};
 use anyhow::Result;
-use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
+use anyhow::{anyhow, Context};
+use git2::{AnnotatedCommit, Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
 
 use crate::default_branch_name::default_branch_name;
-use crate::switch;
+use crate::switch::switch;
 
 pub fn grasp(repo: &Repository) -> Result<()> {
+    let remote = "origin";
+
+    // to avoid complexity, ensure repo is clean
     if !is_clean(&repo)? {
         return Err(anyhow!("repo must be clean"));
     }
 
-    let default = default_branch_name(&repo)?;
-    switch::switch(&repo, &default)?;
+    let default_branch = default_branch_name(&repo)?;
 
-    fetch(&repo, "origin", &default)
-        .context("failed to fetch updates from origin default branch")?;
+    // hold onto the name of the current branch so we can switch to it after updating the default branch
+    let current_branch = current_branch_name(&repo)?;
 
-    rebase_current_branch_upstream(&repo)
-        .context("failed to rebase the default branch")?;
+    let has_remote = repo.find_remote(remote).is_ok();
 
-    /* TODO
-    rebase default on origin/default
-    checkout -
-    rebase on default
-     */
+    if has_remote {
+        // apply remote updates to the default branch
+
+        switch(&repo, &default_branch)?;
+        let upstream = &format!("{}/{}", remote, default_branch);
+        fetch(&repo, remote, &default_branch)
+            .context(format!("failed to fetch updates from {} branch", upstream))?;
+        rebase(&repo, upstream).context(format!(
+            "failed to rebase '{}' on '{}'",
+            default_branch, upstream
+        ))?;
+    }
+
+    // apply default-branch updates to branch of interest
+
+    switch(&repo, &current_branch)?;
+    rebase(&repo, &default_branch)?;
+
     Ok(())
 }
 
-fn rebase_exec(repo: &Repository, base_branch: &str) -> Result<()> {
+fn current_branch_name(repo: &Repository) -> Result<String> {
+    let head = repo.head()?;
+    return head.name().context("HEAD has no name").map(String::from);
+}
+
+fn rebase_exec(repo: &Repository, upstream: &str) -> Result<()> {
     let path = repo.path().parent().context("failed to locate git repo")?;
 
     let status = Command::new("git")
         .arg("rebase")
-        .arg(base_branch)
+        .arg(upstream)
         .current_dir(path)
         .output()?
         .status;
@@ -46,9 +65,12 @@ fn rebase_exec(repo: &Repository, base_branch: &str) -> Result<()> {
     Ok(())
 }
 
-fn rebase_current_branch_upstream(repo: &Repository) -> Result<()> {
+fn rebase(repo: &Repository, upstream: &str) -> Result<()> {
     let mut opts = Default::default();
-    let mut rebase = repo.rebase(None, None, None, Some(&mut opts))?;
+
+    let upstream_commit = annotated_commit_from_shortname(&repo, upstream)?;
+
+    let mut rebase = repo.rebase(None, Some(&upstream_commit), None, Some(&mut opts))?;
     loop {
         let maybe = rebase.next();
         if maybe.is_none() {
@@ -58,6 +80,19 @@ fn rebase_current_branch_upstream(repo: &Repository) -> Result<()> {
         let _op = maybe.unwrap()?;
         rebase.finish(None)?;
     }
+}
+
+fn annotated_commit_from_shortname<'repo>(
+    repo: &'repo Repository,
+    shortname: &str,
+) -> Result<AnnotatedCommit<'repo>> {
+    let commit = repo
+        .resolve_reference_from_short_name(shortname)?
+        .name()
+        .context("failed to resolve reference name")
+        .and_then(|refname| Ok(repo.refname_to_id(refname)?))
+        .and_then(|oid| Ok(repo.find_annotated_commit(oid)?))?;
+    return Ok(commit);
 }
 
 fn fetch(repo: &Repository, remote: &str, branch: &str) -> Result<()> {
@@ -99,31 +134,39 @@ fn dirty_files(repo: &Repository) -> Result<Vec<String>> {
 #[cfg(test)]
 mod test {
     use crate::create_branch::create_branch;
-    use crate::switch;
+    use crate::switch::switch;
     use crate::test::commit_a_file;
 
     use super::*;
 
     #[test]
     fn test_grasp() -> Result<()> {
+        let filename = "foo";
+
         let (_td, repo) = crate::test::repo_init();
-        let default = default_branch_name(&repo)?;
+        let default_branch = default_branch_name(&repo)?;
 
-        let new_branch = create_branch(&repo)?;
+        let feature_branch = create_branch(&repo)?;
+        switch(&repo, &default_branch)?;
+        commit_a_file(&repo, filename)?;
 
-        switch::switch(&repo, &default)?;
-        commit_a_file(&repo, "foo")?;
+        switch(&repo, &feature_branch)?;
+        assert_eq!(false, file_exists(&repo, filename)?);
 
-        switch::switch(&repo, &new_branch)?;
-        assert_eq!(
-            Vec::<String>::new(),
-            dirty_files(&repo)?,
-            "committed files from previous branch are present after switch",
-        );
-        assert!(is_clean(&repo)?);
-
-        assert!(is_clean(&repo)?);
+        grasp(&repo)?;
+        switch(&repo, &feature_branch)?;
+        assert!(file_exists(&repo, filename)?);
 
         Ok(())
+    }
+
+    fn file_exists(repo: &Repository, filename: &str) -> Result<bool> {
+        let exists = repo
+            .path()
+            .parent()
+            .context("failed to get repo path")
+            .map(|p| p.join(filename))?
+            .exists();
+        Ok(exists)
     }
 }
