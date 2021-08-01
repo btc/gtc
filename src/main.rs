@@ -22,6 +22,7 @@ mod create_branch;
 mod default_branch_name;
 mod grasp;
 mod test;
+mod switch;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -4,6 +4,7 @@ use anyhow::Result;
 use git2::BranchType::Local;
 use git2::Repository;
 use primes::{PrimeSet, Sieve};
+use crate::switch::switch;
 
 // returns the name of the created branch
 pub fn create_branch(repo: &Repository) -> anyhow::Result<String> {
@@ -28,13 +29,8 @@ pub fn create_branch(repo: &Repository) -> anyhow::Result<String> {
         .name()
         .context("failed to obtain name of newly created branch")?
         .ok_or(anyhow!("failed to unwrap created branch name"))?;
-    let reference = repo
-        .resolve_reference_from_short_name(name)?
-        .name()
-        .ok_or(anyhow!("failed to resolve reference"))?
-        .to_string();
 
-    repo.set_head(&reference)?;
+    switch(&repo, name)?;
     Ok(name.to_string())
 }
 

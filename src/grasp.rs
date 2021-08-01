@@ -1,9 +1,12 @@
-use crate::default_branch_name::default_branch_name;
-use anyhow::Result;
-use anyhow::{anyhow, Context};
-use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
 use std::env;
 use std::process::Command;
+
+use anyhow::{anyhow, Context};
+use anyhow::Result;
+use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
+
+use crate::default_branch_name::default_branch_name;
+use crate::switch;
 
 pub fn grasp(repo: &Repository) -> Result<()> {
     if !is_clean(&repo)? {
@@ -11,7 +14,7 @@ pub fn grasp(repo: &Repository) -> Result<()> {
     }
 
     let default = default_branch_name(&repo)?;
-    switch(&repo, &default)?;
+    switch::switch(&repo, &default)?;
 
     fetch(&repo, "origin", &default)
         .context("failed to fetch updates from origin default branch")?;
@@ -77,18 +80,6 @@ fn fetch(repo: &Repository, remote: &str, branch: &str) -> Result<()> {
     Ok(())
 }
 
-fn switch(repo: &Repository, branch: &str) -> Result<()> {
-    let reference = repo
-        .resolve_reference_from_short_name(branch)?
-        .name()
-        .ok_or(anyhow!("failed to resolve reference"))?
-        .to_string();
-    let treeish = repo.revparse_single(reference.as_str())?;
-    repo.checkout_tree(&treeish, None)?;
-    repo.set_head(&reference)?;
-    Ok(())
-}
-
 fn is_clean(repo: &Repository) -> Result<bool> {
     Ok(dirty_files(&repo)?.is_empty())
 }
@@ -107,9 +98,11 @@ fn dirty_files(repo: &Repository) -> Result<Vec<String>> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use crate::create_branch::create_branch;
+    use crate::switch;
     use crate::test::commit_a_file;
+
+    use super::*;
 
     #[test]
     fn test_grasp() -> Result<()> {
@@ -118,11 +111,10 @@ mod test {
 
         let new_branch = create_branch(&repo)?;
 
-        switch(&repo, &default)?;
+        switch::switch(&repo, &default)?;
         commit_a_file(&repo, "foo")?;
-        assert_eq!(Vec::<String>::new(), dirty_files(&repo)?);
 
-        switch(&repo, &new_branch)?;
+        switch::switch(&repo, &new_branch)?;
         assert_eq!(
             Vec::<String>::new(),
             dirty_files(&repo)?,
