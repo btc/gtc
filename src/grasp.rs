@@ -1,5 +1,5 @@
 use crate::default_branch_name::default_branch_name;
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use anyhow::Result;
 use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
 use std::env;
@@ -12,9 +12,11 @@ pub fn grasp(repo: Repository) -> Result<()> {
     let default = default_branch_name(&repo)?;
     switch(&repo, &default)?;
 
-    fetch(&repo, "origin", &default)?;
+    fetch(&repo, "origin", &default)
+        .context("failed to fetch updates from origin default branch")?;
 
-    rebase_current_branch_upstream(&repo)?;
+    rebase_current_branch_upstream(&repo)
+        .context("failed to rebase the default branch")?;
 
     /* TODO
     rebase default on origin/default
