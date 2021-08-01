@@ -2,6 +2,7 @@ use crate::default_branch_name::default_branch_name;
 use anyhow::anyhow;
 use anyhow::Result;
 use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
+use std::env;
 
 pub fn grasp(repo: Repository) -> Result<()> {
     if !is_clean(&repo)? {
@@ -38,7 +39,14 @@ fn rebase_current_branch_upstream(repo: &Repository) -> Result<()> {
 
 fn fetch(repo: &Repository, remote: &str, branch: &str) -> Result<()> {
     let mut remote_callbacks = RemoteCallbacks::default();
-    remote_callbacks.credentials(|username, _, _| Cred::ssh_key_from_agent(username));
+    remote_callbacks.credentials(|_, username_from_url, _| {
+        Cred::ssh_key(
+            username_from_url.unwrap(),
+            None,
+            std::path::Path::new(&format!("{}/.ssh/id_rsa", env::var("HOME").unwrap())),
+            None,
+        )
+    });
 
     let mut fetch_options = FetchOptions::default();
     fetch_options.remote_callbacks(remote_callbacks);
