@@ -16,9 +16,10 @@ use anyhow::Result;
 use clap::{AppSettings, Clap};
 use git2::Repository;
 
+mod checkout_default_branch;
+mod cleanup_branches;
 mod create_branch;
 mod default_branch_name;
-mod checkout_default_branch;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -38,6 +39,12 @@ async fn main() -> Result<()> {
         }
         SubCommand::CheckoutDefaultBranch => {
             checkout_default_branch::checkout_default_branch(&repo)?;
+        }
+        SubCommand::CleanupBranches { dry_run } => {
+            if dry_run {
+                println!("dry run...")
+            }
+            cleanup_branches::cleanup_branches(repo, dry_run)?;
         }
     }
     Ok(())
@@ -59,4 +66,14 @@ enum SubCommand {
     CreateBranch,
     #[clap(visible_alias = "m")]
     CheckoutDefaultBranch,
+    CleanupBranches {
+        #[clap(short)]
+        dry_run: bool,
+    },
+}
+
+#[derive(Clap)]
+struct CleanupBranches {
+    #[clap(short)]
+    dry_run: bool,
 }
