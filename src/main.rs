@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
             cleanup_branches::cleanup_branches(repo, dry_run)?;
         }
         SubCommand::Grasp => {
-            grasp::grasp(repo)?;
+            grasp::grasp(&repo)?;
         }
     }
     Ok(())

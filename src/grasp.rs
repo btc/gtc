@@ -4,7 +4,7 @@ use anyhow::Result;
 use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
 use std::env;
 
-pub fn grasp(repo: Repository) -> Result<()> {
+pub fn grasp(repo: &Repository) -> Result<()> {
     if !is_clean(&repo)? {
         return Err(anyhow!("repo must be clean"));
     }
