@@ -9,8 +9,6 @@ use crate::default_branch_name::default_branch_name;
 use crate::switch::switch;
 
 pub fn grasp(repo: &Repository) -> Result<()> {
-    let remote = "origin";
-
     // to avoid complexity, ensure repo is clean
     if !is_clean(&repo)? {
         return Err(anyhow!("repo must be clean"));
@@ -21,6 +19,7 @@ pub fn grasp(repo: &Repository) -> Result<()> {
     // hold onto the name of the current branch so we can switch to it after updating the default branch
     let current_branch = current_branch_name(&repo)?;
 
+    let remote = "origin"; // TODO: parameterize
     let has_remote = repo.find_remote(remote).is_ok();
 
     if has_remote {
@@ -38,8 +37,11 @@ pub fn grasp(repo: &Repository) -> Result<()> {
 
     // apply default-branch updates to branch of interest
 
+    /*
     switch(&repo, &current_branch)?;
     rebase(&repo, &default_branch)?;
+
+     */
 
     Ok(())
 }
@@ -74,11 +76,10 @@ fn rebase(repo: &Repository, upstream: &str) -> Result<()> {
     loop {
         let maybe = rebase.next();
         if maybe.is_none() {
-            rebase.finish(None)?;
+            rebase.finish(None).context("rebase failed on finish")?;
             return Ok(());
         }
-        let _op = maybe.unwrap()?;
-        rebase.finish(None)?;
+        let _op = maybe.unwrap().context("failed rebase operation")?;
     }
 }
 
