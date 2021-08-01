@@ -20,6 +20,7 @@ mod checkout_default_branch;
 mod cleanup_branches;
 mod create_branch;
 mod default_branch_name;
+mod grasp;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -46,6 +47,9 @@ async fn main() -> Result<()> {
             }
             cleanup_branches::cleanup_branches(repo, dry_run)?;
         }
+        SubCommand::Grasp => {
+            grasp::grasp(repo)?;
+        }
     }
     Ok(())
 }
@@ -61,6 +65,7 @@ struct Opts {
 
 #[derive(Clap)]
 enum SubCommand {
+    Grasp,
     DefaultBranchName,
     #[clap(visible_alias = "branch-random")]
     CreateBranch,
