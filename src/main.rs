@@ -21,8 +21,8 @@ mod cleanup_branches;
 mod create_branch;
 mod default_branch_name;
 mod grasp;
-mod test;
 mod switch;
+mod test;
 
 #[tokio::main]
 async fn main() -> Result<()> {

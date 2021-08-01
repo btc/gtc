@@ -27,7 +27,6 @@ pub fn repo_init() -> (TempDir, Repository) {
 
 #[allow(dead_code)]
 pub(crate) fn commit_a_file(repo: &Repository, filename: &str) -> Result<()> {
-
     let mut index = repo.index()?;
     let root = repo
         .path()

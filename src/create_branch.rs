@@ -1,10 +1,10 @@
+use crate::switch::switch;
 use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use git2::BranchType::Local;
 use git2::Repository;
 use primes::{PrimeSet, Sieve};
-use crate::switch::switch;
 
 // returns the name of the created branch
 pub fn create_branch(repo: &Repository) -> anyhow::Result<String> {
