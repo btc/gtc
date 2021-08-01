@@ -1,7 +1,7 @@
 use crate::default_branch_name::default_branch_name;
 use anyhow::anyhow;
 use anyhow::Result;
-use git2::{Repository, StatusOptions};
+use git2::{Cred, FetchOptions, RemoteCallbacks, Repository, StatusOptions};
 
 pub fn grasp(repo: Repository) -> Result<()> {
     if !is_clean(&repo)? {
@@ -31,14 +31,21 @@ fn rebase_current_branch_upstream(repo: &Repository) -> Result<()> {
             rebase.finish(None)?;
             return Ok(());
         }
-        let op = maybe.unwrap()?;
+        let _op = maybe.unwrap()?;
         rebase.finish(None)?;
     }
 }
 
 fn fetch(repo: &Repository, remote: &str, branch: &str) -> Result<()> {
+    let mut remote_callbacks = RemoteCallbacks::default();
+    remote_callbacks.credentials(|username, _, _| Cred::ssh_key_from_agent(username));
+
+    let mut fetch_options = FetchOptions::default();
+    fetch_options.remote_callbacks(remote_callbacks);
+
     let refspecs = &[branch];
-    repo.find_remote(remote)?.fetch(refspecs, None, None)?;
+    repo.find_remote(remote)?
+        .fetch(refspecs, Some(&mut fetch_options), None)?;
     Ok(())
 }
 
