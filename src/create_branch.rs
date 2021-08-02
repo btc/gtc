@@ -7,7 +7,7 @@ use git2::Repository;
 use primes::{PrimeSet, Sieve};
 
 // returns the name of the created branch
-pub fn create_branch(repo: &Repository) -> anyhow::Result<String> {
+pub fn create_branch_in_sequence(repo: &Repository) -> anyhow::Result<String> {
     let mut branches = Vec::new();
     for branch in repo.branches(Some(Local))? {
         let branch_name = branch?
@@ -22,16 +22,19 @@ pub fn create_branch(repo: &Repository) -> anyhow::Result<String> {
 
     let next_branch = next(branches.iter())?;
 
+    let created = create_branch_here(repo, &next_branch)?;
+
+    switch(&repo, &next_branch)?;
+    Ok(next_branch)
+}
+
+pub fn create_branch_here(repo: &Repository, name: &str) -> anyhow::Result<()> {
+
     let target_commit = repo.head()?.peel_to_commit()?;
-    let created = repo.branch(&next_branch, &target_commit, false)?;
 
-    let name = created
-        .name()
-        .context("failed to obtain name of newly created branch")?
-        .ok_or(anyhow!("failed to unwrap created branch name"))?;
+    repo.branch(&name, &target_commit, false)?;
 
-    switch(&repo, name)?;
-    Ok(name.to_string())
+    Ok(())
 }
 
 fn next<T: AsRef<str>>(branches: impl Iterator<Item = T>) -> Result<String> {

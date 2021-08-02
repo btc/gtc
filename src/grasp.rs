@@ -51,6 +51,10 @@ fn current_branch_name(repo: &Repository) -> Result<String> {
     return head.name().context("HEAD has no name").map(String::from);
 }
 
+fn rebase(repo: &Repository, upstream: &str) -> Result<()> {
+    rebase_exec(repo, upstream)
+}
+
 fn rebase_exec(repo: &Repository, upstream: &str) -> Result<()> {
     let path = repo.path().parent().context("failed to locate git repo")?;
 
@@ -67,7 +71,7 @@ fn rebase_exec(repo: &Repository, upstream: &str) -> Result<()> {
     Ok(())
 }
 
-fn rebase(repo: &Repository, upstream: &str) -> Result<()> {
+fn rebase_libgit(repo: &Repository, upstream: &str) -> Result<()> {
     let mut opts = Default::default();
     let sig = Signature::now("gtc", "gtc@example.com").unwrap();
 
@@ -137,7 +141,7 @@ fn dirty_files(repo: &Repository) -> Result<Vec<String>> {
 
 #[cfg(test)]
 mod test {
-    use crate::create_branch::create_branch;
+    use crate::create_branch::create_branch_in_sequence;
     use crate::switch::switch;
     use crate::test::commit_a_file;
 
@@ -150,7 +154,7 @@ mod test {
         let (_td, repo) = crate::test::repo_init();
         let default_branch = default_branch_name(&repo)?;
 
-        let feature_branch = create_branch(&repo)?;
+        let feature_branch = create_branch_in_sequence(&repo)?;
         switch(&repo, &default_branch)?;
         commit_a_file(&repo, filename)?;
 

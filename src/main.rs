@@ -23,6 +23,7 @@ mod default_branch_name;
 mod grasp;
 mod switch;
 mod test;
+mod repository;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -33,11 +34,11 @@ async fn main() -> Result<()> {
     match opts.subcmd {
         SubCommand::DefaultBranchName => {
             let name = default_branch_name::default_branch_name(&repo)
-                .context("failed to obtain name of default branch")?;
+                .context("couldn't figure out name of default branch")?;
             println!("{}", name);
         }
         SubCommand::CreateBranch => {
-            let name = create_branch::create_branch(&repo)?;
+            let name = create_branch::create_branch_in_sequence(&repo)?;
             println!("{}", name);
         }
         SubCommand::CheckoutDefaultBranch => {
