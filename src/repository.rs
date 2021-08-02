@@ -1,8 +1,8 @@
-use git2::{RemoteCallbacks, Cred, FetchOptions};
+use git2::{Cred, RemoteCallbacks};
 use std::env;
 
-struct Repository {
-}
+#[allow(dead_code)]
+struct Repository {}
 
 pub(crate) fn remote_callbacks<'a>() -> RemoteCallbacks<'a> {
     let mut remote_callbacks = RemoteCallbacks::default();

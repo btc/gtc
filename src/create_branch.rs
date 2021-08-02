@@ -1,6 +1,5 @@
 use crate::switch::switch;
 use anyhow::anyhow;
-use anyhow::Context;
 use anyhow::Result;
 use git2::BranchType::Local;
 use git2::Repository;
@@ -22,14 +21,13 @@ pub fn create_branch_in_sequence(repo: &Repository) -> anyhow::Result<String> {
 
     let next_branch = next(branches.iter())?;
 
-    let created = create_branch_here(repo, &next_branch)?;
+    create_branch_here(repo, &next_branch)?;
 
     switch(&repo, &next_branch)?;
     Ok(next_branch)
 }
 
 pub fn create_branch_here(repo: &Repository, name: &str) -> anyhow::Result<()> {
-
     let target_commit = repo.head()?.peel_to_commit()?;
 
     repo.branch(&name, &target_commit, false)?;

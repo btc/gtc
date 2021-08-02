@@ -1,14 +1,14 @@
-use std::env;
+
 use std::process::Command;
 
 use anyhow::Result;
 use anyhow::{anyhow, Context};
 use git2::{
-    AnnotatedCommit, Cred, FetchOptions, RebaseOperationType, RemoteCallbacks, Repository,
-    Signature, StatusOptions,
+    AnnotatedCommit, Cred, FetchOptions, RemoteCallbacks, Repository, Signature, StatusOptions,
 };
 
 use crate::default_branch_name::default_branch_name;
+use crate::repository::remote_callbacks;
 use crate::switch::switch;
 
 pub fn grasp(repo: &Repository) -> Result<()> {
@@ -71,6 +71,7 @@ fn rebase_exec(repo: &Repository, upstream: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn rebase_libgit(repo: &Repository, upstream: &str) -> Result<()> {
     let mut opts = Default::default();
     let sig = Signature::now("gtc", "gtc@example.com").unwrap();
@@ -84,7 +85,7 @@ fn rebase_libgit(repo: &Repository, upstream: &str) -> Result<()> {
             rebase.finish(None).context("rebase failed on finish")?;
             return Ok(());
         }
-        let op = maybe.unwrap().context("failed rebase operation")?;
+        let _ = maybe.unwrap().context("failed rebase operation")?;
 
         let _ = rebase.commit(None, &sig, None)?;
     }
@@ -104,18 +105,8 @@ fn annotated_commit_from_shortname<'repo>(
 }
 
 fn fetch(repo: &Repository, remote: &str, branch: &str) -> Result<()> {
-    let mut remote_callbacks = RemoteCallbacks::default();
-    remote_callbacks.credentials(|_, username_from_url, _| {
-        Cred::ssh_key(
-            username_from_url.unwrap(),
-            None,
-            std::path::Path::new(&format!("{}/.ssh/id_rsa", env::var("HOME").unwrap())),
-            None,
-        )
-    });
-
     let mut fetch_options = FetchOptions::default();
-    fetch_options.remote_callbacks(remote_callbacks);
+    fetch_options.remote_callbacks(remote_callbacks());
 
     let refspecs = &[branch];
     repo.find_remote(remote)?

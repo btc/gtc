@@ -1,10 +1,10 @@
+use crate::repository::remote_callbacks;
 use anyhow::anyhow;
 use anyhow::Context;
 use anyhow::Result;
 use git2::BranchType::Local;
-use git2::Repository;
 use git2::Direction::Fetch;
-use crate::repository::remote_callbacks;
+use git2::Repository;
 
 pub fn default_branch_name(repo: &Repository) -> Result<String> {
     let found_master = repo.find_branch("master", Local).is_ok();
@@ -39,19 +39,16 @@ pub fn default_branch_name(repo: &Repository) -> Result<String> {
 
 #[cfg(test)]
 mod test {
-    use crate::create_branch::{create_branch_here};
-    use crate::test::commit_a_file;
+    use crate::create_branch::create_branch_here;
 
     use super::*;
 
     #[test]
     fn test_lookup_fails_if_both_branches_exist_and_no_origin() -> Result<()> {
-        let filename = "foo";
-
         let (_td, repo) = crate::test::repo_init();
         assert_eq!("main", default_branch_name(&repo)?);
 
-        let master = create_branch_here(&repo, "master")?;
+        create_branch_here(&repo, "master")?;
         assert!(default_branch_name(&repo).is_err());
 
         Ok(())
