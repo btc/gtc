@@ -16,4 +16,5 @@ tempfile = "*"
 dotenv = "*"
 itertools = "*"
 nom = "*"
+serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "0.2", features = ["full"] }

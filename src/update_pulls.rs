@@ -4,8 +4,8 @@ use anyhow::{Context, Result};
 use git2::Repository;
 use github_rs::client::{Executor, Github};
 use itertools::Itertools;
+use serde::Deserialize;
 
-use serde_json::Value;
 
 pub fn update_pulls(opts: Opts, repo: &Repository) -> Result<()> {
     let client = Github::new(opts.token).map_err(to_anyhow)?;
@@ -13,19 +13,40 @@ pub fn update_pulls(opts: Opts, repo: &Repository) -> Result<()> {
     let url = remote.url().context("url is missing")?;
     println!("{}", url);
     let (owner, repository) = parse_github_ssh_url(url).context(anyhow!("unrecognized URL"))?;
-    // TODO: need a func to extract owner and repo from git remote origin URL
-    let (_, _s, _) = client
+
+    let (_, _, pulls) = client
         .get()
         .repos()
         .owner(&owner)
         .repo(&repository)
         .pulls()
-        .execute::<Value>()
+        .execute::<Vec<PullResponse>>()
         .map_err(to_anyhow)?;
+
+    for pull in pulls.ok_or(anyhow!("hmm"))? {
+        println!("{:?}", pull.base);
+        println!("{:?}", pull.head);
+    }
+
     Ok(())
 }
 
-struct Pull {}
+#[derive(Debug, Deserialize)]
+struct PullResponse {
+    pub number: i32,
+    pub title: String,
+    pub locked: bool,
+    pub draft: bool,
+    pub base: BranchResponse,
+    pub head: BranchResponse,
+}
+
+#[derive(Debug, Deserialize)]
+struct BranchResponse {
+    pub label: String,
+    pub r#ref: String,
+    pub sha: String,
+}
 
 pub fn to_anyhow<E: ToString>(e: E) -> anyhow::Error {
     anyhow!(e.to_string())
