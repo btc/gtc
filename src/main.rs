@@ -10,11 +10,11 @@
  * TODO: test different repos flavor, pancake, this one, etc.
  */
 
-
 use anyhow::Context;
 use anyhow::Result;
 use clap::{AppSettings, ArgSettings, Clap};
 use git2::Repository;
+use std::path::PathBuf;
 
 mod checkout_default_branch;
 mod cleanup_branches;
@@ -31,7 +31,12 @@ async fn main() -> Result<()> {
     dotenv::dotenv()?;
     let opts: Opts = Opts::parse();
 
-    let cwd = std::env::current_dir().context("unable to obtain PWD")?;
+    let cwd = opts
+        .repo_path
+        .as_ref()
+        .map(PathBuf::from)
+        .unwrap_or(std::env::current_dir().context("unable to obtain PWD")?);
+
     let repo = Repository::discover(cwd).context("failed to open repo")?;
     match opts.subcmd {
         SubCommand::UpdatePulls => {
@@ -72,6 +77,9 @@ pub struct Opts {
 
     #[clap(long, env = "GITHUB_TOKEN", setting = ArgSettings::HideEnvValues)]
     token: String,
+
+    #[clap(long, env = "REPO")]
+    repo_path: Option<String>,
 }
 
 #[derive(Clap)]
