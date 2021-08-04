@@ -13,4 +13,5 @@ primes = "0.3.0"
 git2 = "0.13.20"
 anyhow = "*"
 tempfile = "*"
+dotenv = "*"
 tokio = { version = "0.2", features = ["full"] }
