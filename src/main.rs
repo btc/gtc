@@ -1,5 +1,4 @@
 /*
- * TODO: grasp
  * TODO: create new PR
  * TODO: access GitHub API in Rust
  * TODO: update PR chain

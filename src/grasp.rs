@@ -4,7 +4,7 @@ use std::process::Command;
 use anyhow::Result;
 use anyhow::{anyhow, Context};
 use git2::{
-    AnnotatedCommit, Cred, FetchOptions, RemoteCallbacks, Repository, Signature, StatusOptions,
+    AnnotatedCommit, FetchOptions, RemoteCallbacks, Repository, Signature, StatusOptions,
 };
 
 use crate::default_branch_name::default_branch_name;
