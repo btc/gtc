@@ -10,13 +10,11 @@
  * TODO: test different repos flavor, pancake, this one, etc.
  */
 
-use anyhow::anyhow;
+
 use anyhow::Context;
 use anyhow::Result;
 use clap::{AppSettings, ArgSettings, Clap};
 use git2::Repository;
-use github_rs::client::Executor;
-use serde_json::Value;
 
 mod checkout_default_branch;
 mod cleanup_branches;
@@ -26,8 +24,7 @@ mod grasp;
 mod repository;
 mod switch;
 mod test;
-
-struct Pull {}
+mod update_pulls;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -37,19 +34,8 @@ async fn main() -> Result<()> {
     let cwd = std::env::current_dir().context("unable to obtain PWD")?;
     let repo = Repository::discover(cwd).context("failed to open repo")?;
     match opts.subcmd {
-        SubCommand::PullRequest => {
-            let client = github_rs::client::Github::new(opts.token).unwrap();
-            // TODO: need a func to extract owner and repo from git remote origin URL
-            let (_, s, _) = client
-                .get()
-                .repos()
-                .owner("btc")
-                .repo("gtc")
-                .pulls()
-                .execute::<Value>()
-                .map_err(|e| anyhow!(e.to_string()))
-                .unwrap();
-            println!("{}", s.as_str());
+        SubCommand::UpdatePulls => {
+            update_pulls::update_pulls(opts, &repo)?;
         }
         SubCommand::DefaultBranchName => {
             let name = default_branch_name::default_branch_name(&repo)
@@ -80,7 +66,7 @@ async fn main() -> Result<()> {
 #[derive(Clap)]
 #[clap(version = "1.0", author = "btc <btc@no.reply.com>")]
 #[clap(setting = AppSettings::ColoredHelp)]
-struct Opts {
+pub struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
 
@@ -90,7 +76,7 @@ struct Opts {
 
 #[derive(Clap)]
 enum SubCommand {
-    PullRequest,
+    UpdatePulls,
     Grasp,
     DefaultBranchName,
     #[clap(visible_alias = "branch-random")]

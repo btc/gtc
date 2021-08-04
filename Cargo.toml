@@ -14,4 +14,6 @@ git2 = "0.13.20"
 anyhow = "*"
 tempfile = "*"
 dotenv = "*"
+itertools = "*"
+nom = "*"
 tokio = { version = "0.2", features = ["full"] }
