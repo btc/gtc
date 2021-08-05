@@ -1,6 +1,5 @@
 /*
  * TODO: create new PR
- * TODO: access GitHub API in Rust
  * TODO: update PR chain
  * TODO: rebase PR on main if dependent PR is merged
  *
@@ -25,6 +24,7 @@ mod repository;
 mod switch;
 mod test;
 mod update_pulls;
+mod pulls;
 
 #[tokio::main]
 async fn main() -> Result<()> {
